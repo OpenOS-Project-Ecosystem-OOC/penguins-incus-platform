@@ -167,9 +167,9 @@ running first.
 
 ```
 kim container  list / create / start / stop / restart / freeze / unfreeze /
-               rename / delete / logs / file-pull / file-push
+               rename / delete / logs / exec / file-pull / file-push
 kim vm         list / create / start / stop / restart / freeze / unfreeze /
-               rename / delete / logs / file-pull / file-push
+               rename / delete / logs / exec / file-pull / file-push
 kim snapshot   list / create / restore / delete
 kim network    list / create / delete
 kim storage    list / create / delete

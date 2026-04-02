@@ -137,6 +137,17 @@ def container_logs(ctx: click.Context, name: str, project: str) -> None:
                                params={"project": project})
 
 
+@container.command("exec")
+@click.argument("name")
+@click.option("--command", "cmd", default="/bin/bash", show_default=True,
+              help="Command to run inside the container.")
+@click.option("--project", default="")
+@click.pass_context
+def container_exec(ctx: click.Context, name: str, cmd: str, project: str) -> None:
+    """Open an interactive shell inside a container."""
+    ctx.obj["client"].exec_session(name, command=cmd, project=project)
+
+
 @container.command("file-pull")
 @click.argument("name")
 @click.argument("remote_path")
@@ -346,6 +357,17 @@ def vm_logs(ctx: click.Context, name: str, project: str) -> None:
     """Fetch VM logs."""
     ctx.obj["client"].get_text(f"/api/v1/instances/{name}/logs",
                                params={"project": project})
+
+
+@vm.command("exec")
+@click.argument("name")
+@click.option("--command", "cmd", default="/bin/bash", show_default=True,
+              help="Command to run inside the VM.")
+@click.option("--project", default="")
+@click.pass_context
+def vm_exec(ctx: click.Context, name: str, cmd: str, project: str) -> None:
+    """Open an interactive shell inside a VM."""
+    ctx.obj["client"].exec_session(name, command=cmd, project=project)
 
 
 @vm.command("file-pull")

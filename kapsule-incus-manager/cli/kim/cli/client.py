@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
+import shutil
+import signal
 import sys
+import termios
+import tty
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
+import websockets
+import websockets.exceptions
 from rich.console import Console
 
 console = Console()
@@ -75,6 +84,103 @@ class DaemonClient:
             console.print(f"[red]Error {exc.response.status_code}:[/] {exc.response.text}")
             sys.exit(1)
         console.print(f"[green]Uploaded[/] {src} ({len(data)} bytes)")
+
+    def exec_session(
+        self,
+        name: str,
+        command: str = "/bin/bash",
+        project: str = "",
+    ) -> None:
+        """Open an interactive PTY session inside *name* via the daemon WebSocket.
+
+        Puts the local terminal into raw mode for the duration of the session,
+        forwards SIGWINCH (terminal resize) to the daemon, and restores the
+        terminal on exit regardless of how the session ends.
+        """
+        if not sys.stdin.isatty():
+            console.print("[red]exec requires an interactive terminal[/]")
+            sys.exit(1)
+
+        cols, rows = shutil.get_terminal_size((80, 24))
+        base_ws = self._base.replace("http://", "ws://").replace("https://", "wss://")
+        params: dict[str, str] = {"command": command, "width": str(cols), "height": str(rows)}
+        if project:
+            params["project"] = project
+        url = f"{base_ws}/api/v1/instances/{name}/exec/ws?{urlencode(params)}"
+
+        asyncio.run(self._exec_async(url, name))
+
+    async def _exec_async(self, url: str, name: str) -> None:
+        """Async core of exec_session: raw-mode I/O loop with resize support."""
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+
+        loop = asyncio.get_running_loop()
+
+        try:
+            tty.setraw(fd)
+
+            async with websockets.connect(  # type: ignore[attr-defined]
+                url,
+                ping_interval=20,
+                ping_timeout=10,
+            ) as ws:
+
+                # ── SIGWINCH: send resize escape sequence to daemon ────────
+                def _on_resize() -> None:
+                    c, r = shutil.get_terminal_size((80, 24))
+                    # VT100 resize sequence — the daemon's PTY honours it
+                    seq = f"\x1b[8;{r};{c}t"
+                    asyncio.ensure_future(ws.send(seq.encode()))
+
+                loop.add_signal_handler(signal.SIGWINCH, _on_resize)
+
+                # ── stdin → WebSocket ─────────────────────────────────────
+                async def _stdin_to_ws() -> None:
+                    try:
+                        while True:
+                            chunk = await loop.run_in_executor(
+                                None, lambda: os.read(fd, 256)
+                            )
+                            if not chunk:
+                                break
+                            await ws.send(chunk)
+                    except (OSError, websockets.exceptions.ConnectionClosed):
+                        pass
+
+                # ── WebSocket → stdout ────────────────────────────────────
+                async def _ws_to_stdout() -> None:
+                    try:
+                        async for msg in ws:
+                            data = msg if isinstance(msg, bytes) else msg.encode()
+                            os.write(sys.stdout.fileno(), data)
+                    except websockets.exceptions.ConnectionClosed:
+                        pass
+
+                done, pending = await asyncio.wait(
+                    [
+                        asyncio.ensure_future(_stdin_to_ws()),
+                        asyncio.ensure_future(_ws_to_stdout()),
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+
+        except websockets.exceptions.WebSocketException as exc:
+            # Restore terminal before printing so the error is readable
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            console.print(f"\n[red]WebSocket error:[/] {exc}")
+            sys.exit(1)
+        finally:
+            try:
+                loop.remove_signal_handler(signal.SIGWINCH)
+            except Exception:
+                pass
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            # Ensure the cursor is on a fresh line after the session ends
+            sys.stdout.write("\r\n")
+            sys.stdout.flush()
 
     def stream_events(self, event_type: str = "") -> None:
         """Stream SSE events from the daemon, printing each to stdout."""
