@@ -25,7 +25,7 @@ Covers the full iwt lifecycle as daemon operations:
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 from ._base import gpu_device, proxy_device, snapshot_schedule_config
 
@@ -128,13 +128,13 @@ async def create_windows_vm(incus: Any, config: dict[str, Any]) -> dict[str, Any
 
 async def start_windows_vm(incus: Any, name: str,
                             project: str = "") -> dict[str, Any]:
-    return await incus.change_instance_state(name, "start", project=project)
+    return cast(dict[str, Any], await incus.change_instance_state(name, "start", project=project))
 
 
 async def stop_windows_vm(incus: Any, name: str, force: bool = False,
                            project: str = "") -> dict[str, Any]:
-    return await incus.change_instance_state(name, "stop", force=force,
-                                              project=project)
+    return cast(dict[str, Any], await incus.change_instance_state(name, "stop", force=force,
+                                              project=project))
 
 
 # ── Snapshot management ───────────────────────────────────────────────────────
@@ -146,11 +146,11 @@ async def set_snapshot_schedule(incus: Any, name: str, schedule: str,
     cfg: dict[str, str] = dict(inst.get("config", {}))
     cfg.update(snapshot_schedule_config(schedule, expiry))
     params = {"project": project} if project else {}
-    return await incus.put(
+    return cast(dict[str, Any], await incus.put(
         f"/1.0/instances/{name}",
         json={**inst, "config": cfg},
         params=params,
-    )
+    ))
 
 
 # ── Backup / restore ──────────────────────────────────────────────────────────
@@ -168,27 +168,27 @@ async def backup_vm(incus: Any, name: str,
         "instance_only": config.get("instance_only", False),
         "optimized_storage": config.get("optimized_storage", True),
     }
-    return await incus.post(
+    return cast(dict[str, Any], await incus.post(
         f"/1.0/instances/{name}/backups",
         json=payload,
         params=params,
-    )
+    ))
 
 
 async def list_backups(incus: Any, name: str,
                         project: str = "") -> list[dict[str, Any]]:
     params = {"project": project} if project else {}
-    return await incus.get(f"/1.0/instances/{name}/backups", params=params)
+    return cast(list[dict[str, Any]], await incus.get(f"/1.0/instances/{name}/backups", params=params))
 
 
 async def restore_vm_backup(incus: Any, name: str, backup_name: str,
                              project: str = "") -> dict[str, Any]:
     params = {"project": project} if project else {}
-    return await incus.post(
+    return cast(dict[str, Any], await incus.post(
         f"/1.0/instances/{name}",
         json={"restore": backup_name},
         params=params,
-    )
+    ))
 
 
 # ── GPU passthrough ───────────────────────────────────────────────────────────
@@ -203,13 +203,13 @@ async def attach_gpu(incus: Any, name: str,
         vendor=config.get("vendor", ""),
         gid=config.get("gid", 44),
     )
-    return await incus.add_device(name, dev_name, device,
-                                   project=config.get("project", ""))
+    return cast(dict[str, Any], await incus.add_device(name, dev_name, device,
+                                   project=config.get("project", "")))
 
 
 async def detach_gpu(incus: Any, name: str, dev_name: str,
                      project: str = "") -> dict[str, Any]:
-    return await incus.remove_device(name, dev_name, project=project)
+    return cast(dict[str, Any], await incus.remove_device(name, dev_name, project=project))
 
 
 # ── Net port forwarding ───────────────────────────────────────────────────────
@@ -223,13 +223,13 @@ async def add_forward(incus: Any, name: str,
         protocol=config.get("protocol", "tcp"),
         listen_addr=config.get("listen_addr", "127.0.0.1"),
     )
-    return await incus.add_device(name, dev_name, device,
-                                   project=config.get("project", ""))
+    return cast(dict[str, Any], await incus.add_device(name, dev_name, device,
+                                   project=config.get("project", "")))
 
 
 async def remove_forward(incus: Any, name: str, dev_name: str,
                           project: str = "") -> dict[str, Any]:
-    return await incus.remove_device(name, dev_name, project=project)
+    return cast(dict[str, Any], await incus.remove_device(name, dev_name, project=project))
 
 
 # ── Guest tools ───────────────────────────────────────────────────────────────
@@ -364,11 +364,11 @@ async def configure_cloud_sync(incus: Any, name: str,
         cfg["user.iwt.cloud_sync.schedule"] = schedule
 
     params = {"project": project} if project else {}
-    return await incus.put(
+    return cast(dict[str, Any], await incus.put(
         f"/1.0/instances/{name}",
         json={**inst, "config": cfg},
         params=params,
-    )
+    ))
 
 
 # ── Security hardening ────────────────────────────────────────────────────────
@@ -413,13 +413,13 @@ async def fleet_list(incus: Any, project: str = "",
 async def fleet_start(incus: Any, names: list[str],
                        project: str = "") -> list[dict[str, Any]]:
     tasks = [start_windows_vm(incus, n, project=project) for n in names]
-    return list(await asyncio.gather(*tasks, return_exceptions=True))  # type: ignore[misc]
+    return cast(list[dict[str, Any]], await asyncio.gather(*tasks, return_exceptions=False))
 
 
 async def fleet_stop(incus: Any, names: list[str],
                       project: str = "") -> list[dict[str, Any]]:
     tasks = [stop_windows_vm(incus, n, project=project) for n in names]
-    return list(await asyncio.gather(*tasks, return_exceptions=True))
+    return cast(list[dict[str, Any]], await asyncio.gather(*tasks, return_exceptions=False))
 
 
 # ── Publish ───────────────────────────────────────────────────────────────────
@@ -440,7 +440,7 @@ async def publish_vm(incus: Any, config: dict[str, Any]) -> dict[str, Any]:
         "properties": {"description": description},
         "public": config.get("public", False),
     }
-    return await incus.post("/1.0/images", json=payload)
+    return cast(dict[str, Any], await incus.post("/1.0/images", json=payload))
 
 
 # ── Disk resize ───────────────────────────────────────────────────────────────
@@ -450,8 +450,8 @@ async def resize_disk(incus: Any, name: str,
     """Resize the root disk of a Windows VM."""
     new_size = config["new_size"]
     project = config.get("project", "")
-    return await incus.add_device(name, "root", {
+    return cast(dict[str, Any], await incus.add_device(name, "root", {
         "type": "disk",
         "path": "/",
         "size": new_size,
-    }, project=project)
+    }, project=project))
