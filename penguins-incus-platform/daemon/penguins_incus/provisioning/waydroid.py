@@ -21,7 +21,7 @@ cloud-init runcmd sequence.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from ._base import base_instance_config, build_cloud_init, gpu_device, proxy_device
 
@@ -67,7 +67,7 @@ async def create_waydroid_container(incus: Any,
     # ADB over TCP proxy so the host can reach ADB inside the container
     devices["adb"] = proxy_device(host_port=5555, guest_port=5555)
 
-    runcmd = [
+    runcmd: list[str | list[str]] = [
         # Install Waydroid from the official repo
         "apt-get install -y curl gnupg2",
         "curl -s https://repo.waydro.id/waydroid.gpg | gpg --dearmor"
@@ -103,7 +103,7 @@ async def create_waydroid_container(incus: Any,
         disk_size=disk_size,
         project=project,
     )
-    return await incus.create_instance(payload)
+    return cast(dict[str, Any], await incus.create_instance(payload))
 
 
 # ── Extensions ────────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ async def install_extension(incus: Any, name: str,
         name,
         ["wdt", "extensions", "install", ext],
         project=project,
-    )  # type: ignore[arg-type]
+    )
     return {"extension": ext, "operation": result}
 
 
@@ -245,13 +245,13 @@ async def attach_gpu(incus: Any, name: str,
         vendor=config.get("vendor", ""),
         gid=config.get("gid", 44),
     )
-    return await incus.add_device(name, dev_name, device,
-                                   project=config.get("project", ""))
+    return cast(dict[str, Any], await incus.add_device(name, dev_name, device,
+                                   project=config.get("project", "")))
 
 
 async def detach_gpu(incus: Any, name: str, dev_name: str,
                      project: str = "") -> dict[str, Any]:
-    return await incus.remove_device(name, dev_name, project=project)
+    return cast(dict[str, Any], await incus.remove_device(name, dev_name, project=project))
 
 
 # ── Fleet ─────────────────────────────────────────────────────────────────────
@@ -287,4 +287,4 @@ async def publish_container(incus: Any, config: dict[str, Any]) -> dict[str, Any
         "properties": {"description": description},
         "public": config.get("public", False),
     }
-    return await incus.post("/1.0/images", json=payload)
+    return cast(dict[str, Any], await incus.post("/1.0/images", json=payload))
