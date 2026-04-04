@@ -197,14 +197,14 @@ async def set_snapshot_schedule(incus: Any, name: str, schedule: str,
 
 async def disable_snapshot_schedule(incus: Any, name: str,
                                      project: str = "") -> dict[str, Any]:
-    return cast(dict[str, Any], await set_snapshot_schedule(incus, name, "", project=project))
+    return await set_snapshot_schedule(incus, name, "", project=project)
 
 
 # ── GPU management ────────────────────────────────────────────────────────────
 
 async def list_host_gpus(incus: Any) -> list[dict[str, Any]]:
     resources = await incus.get_host_resources()
-    return resources.get("gpu", {}).get("cards", [])
+    return cast(list[dict[str, Any]], resources.get("gpu", {}).get("cards", []))
 
 
 async def list_instance_gpus(incus: Any, name: str,
@@ -235,7 +235,7 @@ async def detach_gpu(incus: Any, name: str, dev_name: str,
 
 async def list_host_usb(incus: Any) -> list[dict[str, Any]]:
     resources = await incus.get_host_resources()
-    return resources.get("usb", {}).get("devices", [])
+    return cast(list[dict[str, Any]], resources.get("usb", {}).get("devices", []))
 
 
 async def list_instance_usb(incus: Any, name: str,
@@ -294,7 +294,7 @@ async def fleet_list(incus: Any, project: str = "",
     if status_filter:
         instances = [i for i in instances
                      if i.get("status", "").lower() == status_filter.lower()]
-    return instances
+    return cast(list[dict[str, Any]], instances)
 
 
 async def fleet_start(incus: Any, names: list[str],
