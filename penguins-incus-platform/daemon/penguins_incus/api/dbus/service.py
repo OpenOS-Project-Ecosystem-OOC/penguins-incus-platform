@@ -113,25 +113,25 @@ class _PIPInterface:
 
     def CreateInstance(self, config: str) -> str:
         op = self._run(self._incus.create_instance(json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetInstance(self, name: str, project: str, remote: str) -> str:
         return json.dumps(self._run(self._incus.get_instance(name, project=project)))
 
     def DeleteInstance(self, name: str, project: str, force: bool) -> str:
         op = self._run(self._incus.delete_instance(name, project=project, force=force))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def ChangeInstanceState(self, name: str, project: str, action: str,
                              force: bool, timeout: int) -> str:
         op = self._run(self._incus.change_instance_state(
             name, action, force=force, timeout=timeout, project=project
         ))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def RenameInstance(self, name: str, new_name: str, project: str) -> str:
         op = self._run(self._incus.rename_instance(name, new_name, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def ListSnapshots(self, name: str, project: str) -> str:
         return json.dumps(self._run(self._incus.list_snapshots(name, project=project)))
@@ -141,15 +141,15 @@ class _PIPInterface:
         op = self._run(self._incus.create_snapshot(
             name, snapshot, stateful=stateful, project=project
         ))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def RestoreSnapshot(self, name: str, snapshot: str, project: str) -> str:
         op = self._run(self._incus.restore_snapshot(name, snapshot, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def DeleteSnapshot(self, name: str, snapshot: str, project: str) -> str:
         op = self._run(self._incus.delete_snapshot(name, snapshot, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetInstanceLogs(self, name: str, project: str) -> str:
         return self._run(self._incus.get_instance_logs(name, project=project))
@@ -202,7 +202,7 @@ class _PIPInterface:
 
     def CreateNetwork(self, config: str) -> str:
         op = self._run(self._incus.create_network(json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetNetwork(self, name: str, project: str) -> str:
         return json.dumps(self._run(self._incus.get_network(name, project=project)))
@@ -212,7 +212,7 @@ class _PIPInterface:
 
     def DeleteNetwork(self, name: str, project: str) -> str:
         op = self._run(self._incus.delete_network(name, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     # ── Storage ───────────────────────────────────────────────────────────
 
@@ -221,7 +221,7 @@ class _PIPInterface:
 
     def CreateStoragePool(self, config: str) -> str:
         op = self._run(self._incus.create_storage_pool(json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetStoragePool(self, name: str) -> str:
         return json.dumps(self._run(self._incus.get_storage_pool(name)))
@@ -231,18 +231,18 @@ class _PIPInterface:
 
     def DeleteStoragePool(self, name: str) -> str:
         op = self._run(self._incus.delete_storage_pool(name))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def ListStorageVolumes(self, pool: str, project: str) -> str:
         return json.dumps(self._run(self._incus.list_storage_volumes(pool, project=project)))
 
     def CreateStorageVolume(self, pool: str, config: str) -> str:
         op = self._run(self._incus.create_storage_volume(pool, json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def DeleteStorageVolume(self, pool: str, name: str, project: str) -> str:
         op = self._run(self._incus.delete_storage_volume(pool, name, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     # ── Images ────────────────────────────────────────────────────────────
 
@@ -251,14 +251,14 @@ class _PIPInterface:
 
     def PullImage(self, remote: str, image: str, alias: str) -> str:
         op = self._run(self._incus.pull_image(remote, image, alias=alias))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetImage(self, fingerprint: str) -> str:
         return json.dumps(self._run(self._incus.get_image(fingerprint)))
 
     def DeleteImage(self, fingerprint: str) -> str:
         op = self._run(self._incus.delete_image(fingerprint))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     # ── Profiles ──────────────────────────────────────────────────────────
 
@@ -267,7 +267,7 @@ class _PIPInterface:
 
     def CreateProfile(self, config: str) -> str:
         op = self._run(self._incus.create_profile(json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetProfile(self, name: str, project: str) -> str:
         return json.dumps(self._run(self._incus.get_profile(name, project=project)))
@@ -277,7 +277,7 @@ class _PIPInterface:
 
     def DeleteProfile(self, name: str, project: str) -> str:
         op = self._run(self._incus.delete_profile(name, project=project))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def ListProfilePresets(self) -> str:
         return json.dumps(list_presets())
@@ -289,7 +289,7 @@ class _PIPInterface:
 
     def CreateProject(self, config: str) -> str:
         op = self._run(self._incus.create_project(json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def GetProject(self, name: str) -> str:
         return json.dumps(self._run(self._incus.get_project(name)))
@@ -299,7 +299,7 @@ class _PIPInterface:
 
     def DeleteProject(self, name: str) -> str:
         op = self._run(self._incus.delete_project(name))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     # ── Cluster ───────────────────────────────────────────────────────────
 
@@ -311,15 +311,15 @@ class _PIPInterface:
 
     def RemoveClusterMember(self, name: str) -> str:
         op = self._run(self._incus.delete_cluster_member(name))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def EvacuateClusterMember(self, name: str) -> str:
         op = self._run(self._incus.evacuate_cluster_member(name))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def RestoreClusterMember(self, name: str) -> str:
         op = self._run(self._incus.restore_cluster_member(name))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     # ── Operations ────────────────────────────────────────────────────────
 
@@ -328,7 +328,7 @@ class _PIPInterface:
     def ListRemotes(self) -> str:
         import pathlib
         cfg = pathlib.Path.home() / ".config" / "penguins-incus" / "remotes.json"
-        stored: dict = {}
+        stored: dict[str, Any] = {}
         if cfg.exists():
             import json as _json
             stored = _json.loads(cfg.read_text())
@@ -343,7 +343,7 @@ class _PIPInterface:
         name = body["name"]
         cfg_path = pathlib.Path.home() / ".config" / "penguins-incus" / "remotes.json"
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
-        stored: dict = {}
+        stored: dict[str, Any] = {}
         if cfg_path.exists():
             stored = json.loads(cfg_path.read_text())
         stored[name] = body
@@ -355,7 +355,7 @@ class _PIPInterface:
     def GetRemote(self, name: str) -> str:
         import pathlib
         cfg = pathlib.Path.home() / ".config" / "penguins-incus" / "remotes.json"
-        stored: dict = {}
+        stored: dict[str, Any] = {}
         if cfg.exists():
             stored = json.loads(cfg.read_text())
         if name in stored:
@@ -391,7 +391,7 @@ class _PIPInterface:
 
     def DeployCompose(self, config: str) -> str:
         op = self._run(deploy_compose(self._incus, json.loads(config)))
-        return op.get("id", "")
+        return str(op.get("id", ""))
 
     def ConvertCompose(self, compose_yaml: str) -> str:
         return json.dumps(convert_compose(compose_yaml))
