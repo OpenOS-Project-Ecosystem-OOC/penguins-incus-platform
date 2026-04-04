@@ -5,7 +5,11 @@ from typing import Any
 from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["storage"])
-def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
+
+
+def _incus(req: Request) -> Any:
+    return req.app.state.incus
+
 
 @router.get("/storage-pools")
 async def list_storage_pools(req: Request, remote: str = "") -> Any:
