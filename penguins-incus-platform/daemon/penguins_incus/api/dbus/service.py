@@ -36,7 +36,6 @@ class DBusService:
         """Start the D-Bus service and forward events as signals."""
         try:
             from dasbus.connection import SessionMessageBus  # type: ignore[import-untyped]
-            from dasbus.server.interface import dbus_interface  # type: ignore[import-untyped]  # noqa: F401
         except ImportError:
             logger.warning("dasbus not available — D-Bus service disabled")
             # Block forever so the TaskGroup doesn't exit
