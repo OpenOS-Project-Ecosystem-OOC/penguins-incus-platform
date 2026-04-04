@@ -26,6 +26,7 @@ dev = [
     "httpx",
     "ruff",
     "mypy",
+    "types-PyYAML",
 ]
 
 [project.scripts]
