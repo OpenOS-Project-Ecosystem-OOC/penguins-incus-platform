@@ -5,7 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["projects"])
-def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
+def _incus(req: Request) -> Any:
+    return req.app.state.incus
 
 @router.get("/projects")
 async def list_projects(req: Request, remote: str = "") -> Any:
