@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import pathlib
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -20,7 +20,7 @@ _REMOTES_FILE = pathlib.Path.home() / ".config" / "penguins-incus" / "remotes.js
 
 def _load() -> dict[str, Any]:
     if _REMOTES_FILE.exists():
-        return json.loads(_REMOTES_FILE.read_text())  # type: ignore[return-value]
+        return cast(dict[str, Any], json.loads(_REMOTES_FILE.read_text()))
     return {}
 
 
@@ -71,7 +71,7 @@ async def get_remote(name: str) -> dict[str, Any]:
         return {"name": "local", "url": "unix://", "protocol": "incus"}
     if name not in remotes:
         raise HTTPException(404, f"Remote '{name}' not found")
-    return remotes[name]  # type: ignore[return-value]
+    return cast(dict[str, Any], remotes[name])
 
 
 @router.delete("/remotes/{name}", status_code=204)
