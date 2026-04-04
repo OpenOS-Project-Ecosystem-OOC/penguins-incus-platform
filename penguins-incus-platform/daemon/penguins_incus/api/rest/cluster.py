@@ -5,7 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["cluster"])
-def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
+def _incus(req: Request) -> Any:
+    return req.app.state.incus
 
 @router.get("/cluster/members")
 async def list_cluster_members(req: Request, remote: str = "") -> Any:
