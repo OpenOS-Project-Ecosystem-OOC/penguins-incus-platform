@@ -204,7 +204,10 @@ class IncusClient:
         params: dict[str, str] = {"recursion": "1"}
         if project:
             params["project"] = project
-        return cast(list[dict[str, Any]], await self.get(f"/1.0/instances/{name}/snapshots", params=params))
+        return cast(
+            list[dict[str, Any]],
+            await self.get(f"/1.0/instances/{name}/snapshots", params=params),
+        )
 
     async def create_snapshot(self, name: str, snapshot: str,
                                stateful: bool = False, project: str = "") -> dict[str, Any]:
@@ -257,7 +260,10 @@ class IncusClient:
     # ── Storage ───────────────────────────────────────────────────────────
 
     async def list_storage_pools(self) -> list[dict[str, Any]]:
-        return cast(list[dict[str, Any]], await self.get("/1.0/storage-pools", params={"recursion": "1"}))
+        return cast(
+            list[dict[str, Any]],
+            await self.get("/1.0/storage-pools", params={"recursion": "1"}),
+        )
 
     async def create_storage_pool(self, config: dict[str, Any]) -> dict[str, Any]:
         return cast(dict[str, Any], await self.post("/1.0/storage-pools", json=config))
@@ -276,11 +282,17 @@ class IncusClient:
         params: dict[str, str] = {"recursion": "1"}
         if project:
             params["project"] = project
-        return cast(dict[str, Any], await self.get(f"/1.0/storage-pools/{pool}/volumes", params=params))
+        return cast(
+            dict[str, Any],
+            await self.get(f"/1.0/storage-pools/{pool}/volumes", params=params),
+        )
 
     async def create_storage_volume(self, pool: str,
                                      config: dict[str, Any]) -> dict[str, Any]:
-        return cast(dict[str, Any], await self.post(f"/1.0/storage-pools/{pool}/volumes", json=config))
+        return cast(
+            dict[str, Any],
+            await self.post(f"/1.0/storage-pools/{pool}/volumes", json=config),
+        )
 
     async def delete_storage_volume(self, pool: str, name: str,
                                      project: str = "") -> dict[str, Any]:
@@ -336,7 +348,10 @@ class IncusClient:
     # ── Projects ──────────────────────────────────────────────────────────
 
     async def list_projects(self) -> list[dict[str, Any]]:
-        return cast(list[dict[str, Any]], await self.get("/1.0/projects", params={"recursion": "1"}))
+        return cast(
+            list[dict[str, Any]],
+            await self.get("/1.0/projects", params={"recursion": "1"}),
+        )
 
     async def create_project(self, config: dict[str, Any]) -> dict[str, Any]:
         return cast(dict[str, Any], await self.post("/1.0/projects", json=config))
@@ -353,7 +368,10 @@ class IncusClient:
     # ── Cluster ───────────────────────────────────────────────────────────
 
     async def list_cluster_members(self) -> list[dict[str, Any]]:
-        return cast(list[dict[str, Any]], await self.get("/1.0/cluster/members", params={"recursion": "1"}))
+        return cast(
+            list[dict[str, Any]],
+            await self.get("/1.0/cluster/members", params={"recursion": "1"}),
+        )
 
     async def get_cluster_member(self, name: str) -> dict[str, Any]:
         return cast(dict[str, Any], await self.get(f"/1.0/cluster/members/{name}"))
@@ -372,7 +390,10 @@ class IncusClient:
     # ── Operations ────────────────────────────────────────────────────────
 
     async def list_operations(self) -> list[dict[str, Any]]:
-        return cast(list[dict[str, Any]], await self.get("/1.0/operations", params={"recursion": "1"}))
+        return cast(
+            list[dict[str, Any]],
+            await self.get("/1.0/operations", params={"recursion": "1"}),
+        )
 
     async def get_operation(self, op_id: str) -> dict[str, Any]:
         return cast(dict[str, Any], await self.get(f"/1.0/operations/{op_id}"))
