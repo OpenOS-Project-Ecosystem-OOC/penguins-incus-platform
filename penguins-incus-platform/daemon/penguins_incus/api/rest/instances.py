@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 router = APIRouter(tags=["instances"])
 
 
-def _incus(req: Request):  # type: ignore[return]
+def _incus(req: Request) -> Any:
     return req.app.state.incus
 
 
@@ -102,7 +102,7 @@ async def delete_snapshot(
 
 @router.get("/instances/{name}/logs", response_class=PlainTextResponse)
 async def get_instance_logs(req: Request, name: str, project: str = "") -> str:
-    return await _incus(req).get_instance_logs(name, project=project)
+    return str(await _incus(req).get_instance_logs(name, project=project))
 
 
 @router.get("/instances/{name}/files")
@@ -171,7 +171,7 @@ async def console_ws(
     )
 
     try:
-        async with websockets.connect(incus_ws_url) as incus_ws:  # type: ignore[attr-defined]
+        async with websockets.connect(incus_ws_url) as incus_ws:
             async def _client_to_incus() -> None:
                 try:
                     while True:
@@ -235,7 +235,7 @@ async def exec_ws(
     incus_ws_url = f"ws+unix:///var/lib/incus/unix.socket:/1.0/operations/{op_id}/websocket?secret={secret}"
 
     try:
-        async with websockets.connect(incus_ws_url) as incus_ws:  # type: ignore[attr-defined]
+        async with websockets.connect(incus_ws_url) as incus_ws:
             async def _client_to_incus() -> None:
                 try:
                     while True:
