@@ -5,7 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["images"])
-def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
+def _incus(req: Request) -> Any:
+    return req.app.state.incus
 
 @router.get("/images")
 async def list_images(req: Request, remote: str = "") -> Any:
