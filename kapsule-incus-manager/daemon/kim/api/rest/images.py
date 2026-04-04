@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from typing import Any
+
 from fastapi import APIRouter, Request
+
 router = APIRouter(tags=["images"])
 def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
 

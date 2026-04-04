@@ -7,29 +7,30 @@ ensuring both transports share identical business logic.
 
 from __future__ import annotations
 
+import pathlib
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import pathlib
 
 from ...events import EventBus
 from ...incus.client import IncusClient
 from . import (
+    cluster,
+    events,
+    images,
     instances,
     networks,
-    storage,
-    images,
+    operations,
     profiles,
     projects,
-    cluster,
-    remotes,
-    operations,
-    events,
     provisioning,
     provisioning_generic,
-    provisioning_waydroid,
     provisioning_macos,
+    provisioning_waydroid,
     provisioning_windows,
+    remotes,
+    storage,
 )
 
 _WEB_DIST = pathlib.Path(__file__).parents[5] / "ui-web" / "dist"

@@ -25,7 +25,6 @@ from typing import Any
 
 from ._base import base_instance_config, build_cloud_init, gpu_device, proxy_device
 
-
 # ── Known extensions ──────────────────────────────────────────────────────────
 
 KNOWN_EXTENSIONS = {

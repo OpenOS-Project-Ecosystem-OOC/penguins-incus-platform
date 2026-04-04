@@ -49,7 +49,7 @@ it("renders Activate button for each remote", async () => {
   expect(activateButtons).toHaveLength(2);
 });
 
-it("calls POST activate endpoint on Activate click", async () => {
+it("calls PUT activate endpoint on Activate click", async () => {
   mockFetch();
   render(<RemotesPage />);
   await waitFor(() => screen.getByText("prod"));
@@ -58,7 +58,7 @@ it("calls POST activate endpoint on Activate click", async () => {
   await waitFor(() => {
     const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
     const activateCall = calls.find(([url, opts]: [string, RequestInit]) =>
-      url.includes("prod") && url.includes("activate") && opts?.method === "POST"
+      url.includes("prod") && url.includes("activate") && opts?.method === "PUT"
     );
     expect(activateCall).toBeDefined();
   });

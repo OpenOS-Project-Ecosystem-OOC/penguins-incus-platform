@@ -1,7 +1,11 @@
 from __future__ import annotations
+
 from typing import Any
+
 from fastapi import APIRouter, Request
+
 from ...profiles.library import list_presets
+
 router = APIRouter(tags=["profiles"])
 def _incus(req: Request): return req.app.state.incus  # type: ignore[return]
 

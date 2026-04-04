@@ -30,7 +30,6 @@ from typing import Any
 
 from ._base import gpu_device, proxy_device, snapshot_schedule_config
 
-
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 DEFAULT_STORAGE_POOL = "default"

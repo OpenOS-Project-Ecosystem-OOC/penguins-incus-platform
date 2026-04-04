@@ -13,8 +13,8 @@ import sys
 
 import uvicorn
 
-from .api.rest.app import build_app
 from .api.dbus.service import DBusService
+from .api.rest.app import build_app
 from .events import EventBus
 from .incus.client import IncusClient
 from .resources import poll_resource_usage

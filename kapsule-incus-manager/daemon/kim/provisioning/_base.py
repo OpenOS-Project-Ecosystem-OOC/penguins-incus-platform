@@ -5,7 +5,6 @@ from __future__ import annotations
 import textwrap
 from typing import Any
 
-
 # ── Cloud-init builder ────────────────────────────────────────────────────────
 
 def build_cloud_init(

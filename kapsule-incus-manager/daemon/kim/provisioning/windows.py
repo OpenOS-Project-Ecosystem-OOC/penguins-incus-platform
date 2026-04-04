@@ -29,7 +29,6 @@ from typing import Any
 
 from ._base import gpu_device, proxy_device, snapshot_schedule_config
 
-
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 DEFAULT_PROFILE = "windows-desktop"
@@ -388,7 +387,7 @@ async def harden_vm(incus: Any, name: str,
     op = await incus.exec_instance(
         name,
         ["powershell.exe", "-ExecutionPolicy", "Bypass",
-         "-File", f"C:\\iwt\\security\\harden-vm.ps1", "-Level", level],
+         "-File", "C:\\iwt\\security\\harden-vm.ps1", "-Level", level],
         project=project,
     )
     return {"level": level, "operation": op}

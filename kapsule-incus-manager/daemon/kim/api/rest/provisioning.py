@@ -1,7 +1,11 @@
 from __future__ import annotations
+
 from typing import Any
+
 from fastapi import APIRouter, Request
-from ...provisioning.compose import deploy_compose, convert_compose
+
+from ...provisioning.compose import convert_compose, deploy_compose
+
 router = APIRouter(tags=["provisioning"])
 
 @router.post("/provisioning/compose", status_code=202)
