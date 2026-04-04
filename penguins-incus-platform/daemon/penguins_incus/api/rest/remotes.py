@@ -20,7 +20,7 @@ _REMOTES_FILE = pathlib.Path.home() / ".config" / "penguins-incus" / "remotes.js
 
 def _load() -> dict[str, Any]:
     if _REMOTES_FILE.exists():
-        return json.loads(_REMOTES_FILE.read_text())
+        return json.loads(_REMOTES_FILE.read_text())  # type: ignore[return-value]
     return {}
 
 
@@ -29,7 +29,7 @@ def _save(remotes: dict[str, Any]) -> None:
     _REMOTES_FILE.write_text(json.dumps(remotes, indent=2))
 
 
-def _incus(req: Request):  # type: ignore[return]
+def _incus(req: Request) -> Any:
     return req.app.state.incus
 
 
@@ -65,13 +65,13 @@ async def add_remote(req: Request, body: dict[str, Any]) -> Any:
 
 
 @router.get("/remotes/{name}")
-async def get_remote(name: str) -> Any:
+async def get_remote(name: str) -> dict[str, Any]:
     remotes = _load()
     if name == "local":
         return {"name": "local", "url": "unix://", "protocol": "incus"}
     if name not in remotes:
         raise HTTPException(404, f"Remote '{name}' not found")
-    return remotes[name]
+    return remotes[name]  # type: ignore[return-value]
 
 
 @router.delete("/remotes/{name}", status_code=204)
