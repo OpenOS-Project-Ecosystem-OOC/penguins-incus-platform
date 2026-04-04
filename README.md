@@ -4,6 +4,18 @@ Unified [Incus](https://linuxcontainers.org/incus/) container and VM management
 with full feature parity across three frontends: a Qt6/QML desktop app, a React
 web UI, and a CLI.
 
+KIM is the central control plane for all Incus guest types — generic Linux
+containers, Waydroid (Android) containers, macOS KVM VMs, and Windows VMs.
+Four previously independent toolkits have been merged into the daemon as
+provisioning plugins:
+
+| Source project | Guest type | CLI entry point |
+|---|---|---|
+| [incusbox](https://github.com/Interested-Deving-1896/incusbox) | Generic Linux containers | `kim provision generic` |
+| [waydroid-toolkit](https://github.com/Interested-Deving-1896/waydroid-toolkit) | Waydroid (Android) containers | `kim provision waydroid` |
+| [Incus-MacOS-Toolkit](https://github.com/Interested-Deving-1896/Incus-MacOS-Toolkit) | macOS KVM VMs | `kim provision macos` |
+| [incus-windows-toolkit](https://github.com/Interested-Deving-1896/incus-windows-toolkit) | Windows VMs | `kim provision windows` |
+
 ## Architecture
 
 ```
@@ -17,6 +29,12 @@ web UI, and a CLI.
            ┌──────────────────────┐                │
            │    kim-daemon        │◄───────────────┘
            │  (FastAPI + dasbus)  │
+           │                      │
+           │  provisioning/       │
+           │    generic.py        │  ← incusbox
+           │    waydroid.py       │  ← waydroid-toolkit
+           │    macos.py          │  ← Incus-MacOS-Toolkit
+           │    windows.py        │  ← incus-windows-toolkit
            └──────────┬───────────┘
                       │ Unix socket
                       ▼
@@ -26,19 +44,30 @@ web UI, and a CLI.
            └──────────────────────┘
 ```
 
-The daemon is the single control plane. All three frontends are thin clients —
-they never talk to Incus directly. The REST and D-Bus transports expose
-identical operations, so every action available in the GUI is also available
-in the CLI.
+The daemon is the single control plane. No frontend or plugin calls the `incus`
+CLI directly — all operations go through the Incus REST API. Every action
+available in the GUI is also available in the CLI and REST API.
 
 ## Repository layout
 
 ```
 ├── ARCHITECTURE.md                    # Design decisions and component boundaries
-├── kapsule-incus-manager/             # Main project
-│   ├── api/schema/                    # OpenAPI schema + D-Bus XML (canonical)
-│   ├── daemon/                        # Python daemon (FastAPI + dasbus)
+├── kapsule-incus-manager/
+│   ├── api/schema/                    # OpenAPI schema (143 operations) + D-Bus XML
+│   ├── daemon/
+│   │   └── kim/
+│   │       ├── provisioning/          # Guest-type provisioning plugins
+│   │       │   ├── generic.py         # incusbox feature set
+│   │       │   ├── waydroid.py        # waydroid-toolkit feature set
+│   │       │   ├── macos.py           # Incus-MacOS-Toolkit feature set
+│   │       │   └── windows.py         # incus-windows-toolkit feature set
+│   │       └── incus/client.py        # Async Incus REST client
 │   ├── cli/                           # Python CLI (Click + httpx + rich)
+│   ├── profiles/                      # Bundled Incus profile presets (16 profiles)
+│   │   ├── generic/                   # incusbox profiles
+│   │   ├── macos/                     # macOS KVM profile
+│   │   ├── windows/                   # Windows VM profiles + GPU overlays
+│   │   └── waydroid/                  # Waydroid container profile
 │   ├── ui-web/                        # React/TypeScript web UI (Vite)
 │   └── ui-qml/                        # Qt6/QML desktop UI + libkim-qt
 ```
@@ -60,7 +89,24 @@ kim-daemon
 ```bash
 cd kapsule-incus-manager/cli
 pip install -e ".[dev]"
+
+# Generic containers (incusbox)
+kim provision generic create mybox --image images:ubuntu/24.04/cloud
+
+# Waydroid (Android) container
+kim provision waydroid create my-android --image-type GAPPS
+
+# macOS VM
+kim provision macos image firmware
+kim provision macos image fetch --version sonoma
+kim provision macos create my-mac --version sonoma
+
+# Windows VM
+kim provision windows create my-win --image /path/to/win11.iso
+
+# Standard instance management
 kim container list
+kim vm list
 ```
 
 ### Web UI
