@@ -130,7 +130,7 @@ async def install_extension(incus: Any, name: str,
         name,
         ["wdt", "extensions", "install", ext],
         project=project,
-    )
+    )  # type: ignore[arg-type]
     return {"extension": ext, "operation": result}
 
 
