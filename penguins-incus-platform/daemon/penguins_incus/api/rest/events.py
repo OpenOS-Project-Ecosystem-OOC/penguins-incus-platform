@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
@@ -21,7 +22,7 @@ async def stream_events_sse(
     """Server-Sent Events stream. Each event is a JSON-encoded PIP Event."""
     bus = req.app.state.bus
 
-    async def _generator():
+    async def _generator() -> AsyncGenerator[str, None]:
         async for event in bus.iter_events(type_filter=type, project_filter=project):
             yield f"data: {json.dumps(event)}\n\n"
 
