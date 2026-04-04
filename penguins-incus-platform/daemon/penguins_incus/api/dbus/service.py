@@ -35,8 +35,8 @@ class DBusService:
     async def run(self) -> None:
         """Start the D-Bus service and forward events as signals."""
         try:
-            from dasbus.connection import SessionMessageBus
-            from dasbus.server.interface import dbus_interface  # noqa: F401
+            from dasbus.connection import SessionMessageBus  # type: ignore[import-untyped]
+            from dasbus.server.interface import dbus_interface  # type: ignore[import-untyped]  # noqa: F401
         except ImportError:
             logger.warning("dasbus not available — D-Bus service disabled")
             # Block forever so the TaskGroup doesn't exit
@@ -152,7 +152,7 @@ class _PIPInterface:
         return str(op.get("id", ""))
 
     def GetInstanceLogs(self, name: str, project: str) -> str:
-        return self._run(self._incus.get_instance_logs(name, project=project))
+        return str(self._run(self._incus.get_instance_logs(name, project=project)))
 
     def ConsoleInstance(self, name: str, project: str, type_: str,
                         width: int, height: int) -> str:
