@@ -1,8 +1,8 @@
 name: Mirror to OpenOS-Project-Ecosystem-OOC
 
 # Sync chain:
-#   OpenOS-Project-Ecosystem-OOC  ->(upstream mirror.yaml)->  OpenOS-Project-OSP
-#   OpenOS-Project-OSP  ->(this file)->  OpenOS-Project-Ecosystem-OOC
+#   OpenOS-Project-Ecosystem-OOC  ->(upstream mirror.yaml)->  OpenOS-Project-Ecosystem-OOC
+#   OpenOS-Project-Ecosystem-OOC  ->(this file)->  OpenOS-Project-Ecosystem-OOC
 
 on:
   push:
