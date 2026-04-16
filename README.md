@@ -11,10 +11,10 @@ provisioning plugins:
 
 | Source project | Guest type | CLI entry point |
 |---|---|---|
-| [incusbox](https://github.com/Interested-Deving-1896/incusbox) | Generic Linux containers | `penguins-incus provision generic` |
-| [waydroid-toolkit](https://github.com/Interested-Deving-1896/waydroid-toolkit) | Waydroid (Android) containers | `penguins-incus provision waydroid` |
-| [Incus-MacOS-Toolkit](https://github.com/Interested-Deving-1896/Incus-MacOS-Toolkit) | macOS KVM VMs | `penguins-incus provision macos` |
-| [incus-windows-toolkit](https://github.com/Interested-Deving-1896/incus-windows-toolkit) | Windows VMs | `penguins-incus provision windows` |
+| [incusbox](https://github.com/OpenOS-Project-Ecosystem-OOC/incusbox) | Generic Linux containers | `penguins-incus provision generic` |
+| [waydroid-toolkit](https://github.com/OpenOS-Project-Ecosystem-OOC/waydroid-toolkit) | Waydroid (Android) containers | `penguins-incus provision waydroid` |
+| [Incus-MacOS-Toolkit](https://github.com/OpenOS-Project-Ecosystem-OOC/Incus-MacOS-Toolkit) | macOS KVM VMs | `penguins-incus provision macos` |
+| [incus-windows-toolkit](https://github.com/OpenOS-Project-Ecosystem-OOC/incus-windows-toolkit) | Windows VMs | `penguins-incus provision windows` |
 
 ## Architecture
 
