@@ -1,0 +1,21 @@
+# Converted from GitHub Actions — penguins-incus-platform
+
+stages:
+  - test
+
+test:
+  stage: test
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -qq && apt-get install -y shellcheck
+  script:
+    - |
+      failed=0
+      for f in $(find . -name "*.sh" ! -path "./.git/*"); do
+        bash -n "$f" || { echo "FAIL syntax: $f"; failed=1; }
+        shellcheck --severity=warning "$f" || { echo "FAIL shellcheck: $f"; failed=1; }
+      done
+      exit $failed
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
