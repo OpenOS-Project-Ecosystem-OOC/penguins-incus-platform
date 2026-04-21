@@ -9,10 +9,10 @@ previously maintained as separate projects:
 
 | Source project | Guest type | PIP integration |
 |---|---|---|
-| [incusbox](https://gitlab.com/OSPF1896/incusbox) | Generic Linux containers | `penguins-incus provision generic` |
-| [waydroid-toolkit](https://gitlab.com/OSPF1896/waydroid-toolkit) | Waydroid (Android) containers | `penguins-incus provision waydroid` |
-| [Incus-MacOS-Toolkit](https://gitlab.com/OSPF1896/Incus-MacOS-Toolkit) | macOS KVM VMs | `penguins-incus provision macos` |
-| [incus-windows-toolkit](https://gitlab.com/OSPF1896/incus-windows-toolkit) | Windows VMs | `penguins-incus provision windows` |
+| [incusbox](https://gitlab.com/openos-project/incus_deving/incusbox) | Generic Linux containers | `penguins-incus provision generic` |
+| [waydroid-toolkit](https://gitlab.com/openos-project/incus_deving/waydroid-toolkit) | Waydroid (Android) containers | `penguins-incus provision waydroid` |
+| [Incus-MacOS-Toolkit](https://gitlab.com/openos-project/incus_deving/incus-mac-os-toolkit) | macOS KVM VMs | `penguins-incus provision macos` |
+| [incus-windows-toolkit](https://gitlab.com/openos-project/incus_deving/incus-windows-toolkit) | Windows VMs | `penguins-incus provision windows` |
 
 All four toolkits are now daemon plugins — their logic runs inside `penguins-incus-daemon`
 and is exposed through the same REST/D-Bus API used by the GUI frontends.

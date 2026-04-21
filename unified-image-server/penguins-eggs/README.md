@@ -4,7 +4,7 @@ ChromiumOS family integration for [penguins-eggs](https://github.com/pieroproiet
 the live-ISO remastering tool.
 
 These files are drop-in replacements/additions for the `all-features` branch of
-[Interested-Deving-1896/penguins-eggs](https://gitlab.com/OSPF1896/penguins-eggs).
+[Interested-Deving-1896/penguins-eggs](https://gitlab.com/openos-project/penguins-eggs_deving/penguins-eggs).
 
 ## Files
 
