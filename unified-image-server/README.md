@@ -50,4 +50,4 @@ and browser flavour selection.
 | manifests/gentoo/ | liangyongxiang/my-gentoo-incus-scripts |
 | chromiumos-stage3 (amd64) | sebanc/chromiumos-stage3 |
 | chromiumos-stage3 (arm64) | openFyde overlays |
-| penguins-eggs distro matrix | Interested-Deving-1896/penguins-eggs |
+| penguins-eggs distro matrix | openos-project/penguins-eggs |
