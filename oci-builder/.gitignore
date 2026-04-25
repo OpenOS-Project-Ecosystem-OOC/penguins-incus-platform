@@ -1,14 +1,6 @@
 # Rust
-incus-oci-builder/target/
-incus-oci-builder/Cargo.lock
+target/
+Cargo.lock
 
 # OCI build output
 oci-output/
-
-# Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-.npmrc
