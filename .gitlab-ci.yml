@@ -77,8 +77,8 @@ shellcheck:
   image: python:3.12-slim
   before_script:
     # build-essential + libcairo2-dev: pycairo needs a C compiler and Cairo headers
-    # libgirepository1.0-dev + gir1.2-glib-2.0: dasbus needs GObject introspection
-    - apt-get update -qq && apt-get install -y -q build-essential pkg-config libcairo2-dev libgirepository1.0-dev gir1.2-glib-2.0
+    # libgirepository-2.0-dev: pygobject/dasbus needs girepository-2.0 pkg-config (GLib 2.80+)
+    - apt-get update -qq && apt-get install -y -q build-essential pkg-config libcairo2-dev libgirepository-2.0-dev
     - pip install -e "penguins-incus-platform/${COMPONENT}[dev]" --quiet
   script:
     - cd penguins-incus-platform/${COMPONENT}
