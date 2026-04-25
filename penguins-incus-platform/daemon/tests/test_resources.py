@@ -63,7 +63,10 @@ def test_cpu_fraction_non_zero_baseline() -> None:
 
 def test_cpu_fraction_zero_num_cpus_guard() -> None:
     prev = _CpuSample(cpu_ns=0, wall_ns=0.0)
-    assert calc_cpu_fraction(prev, curr_cpu_ns=1_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=0) == 0.0
+    assert (
+        calc_cpu_fraction(prev, curr_cpu_ns=1_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=0)
+        == 0.0
+    )
 
 
 # ── _read_cpu_ns ──────────────────────────────────────────────────────────────
