@@ -1,0 +1,84 @@
+[package]
+name = "incus-oci-builder"
+version = "0.1.0"
+edition = "2021"
+description = "OCI image builder using Incus system containers as the build environment"
+license = "Apache-2.0"
+
+[[bin]]
+name = "incus-oci-builder"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serialization (definition files are YAML, OCI manifests are JSON)
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1"
+
+# HTTP client for Incus REST API over Unix socket
+# hyperlocal provides a hyper connector for Unix domain sockets.
+# We use hyper + hyper-util directly for the Incus client, and keep
+# reqwest for the OCI registry push (HTTPS only).
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http1", "tokio"] }
+http-body-util = "0.1"
+hyperlocal = { version = "0.9", default-features = false, features = ["client"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+bytes = "1"
+
+# OCI image spec types
+oci-spec = "0.7"
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Misc
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+hex = "0.4"
+tempfile = "3"
+tar = "0.4"
+flate2 = "1"
+xz2 = "0.1"
+urlencoding = "2"
+walkdir = "2"
+
+# Base64 for Incus file push API and Docker auth
+base64 = "0.22"
+
+# For debootstrap: running host-side commands
+which = "6"
+
+# For reading ~/.docker/config.json home directory
+dirs-next = "2"
+
+# WebSocket exec streaming
+tokio-tungstenite = { version = "0.29", features = ["native-tls"] }
+futures-util = "0.3"
+
+# Progress reporting
+indicatif = "0.18"
+tracing-indicatif = "0.3"
+
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3"
+flate2 = "1"
+xz2 = "0.1"
+serde_yaml = "0.9"
+wiremock = "0.6"
+sha2 = "0.10"
+tar = "0.4"
