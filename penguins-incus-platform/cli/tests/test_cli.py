@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from typing import Any, Generator, Iterator
+from typing import Any, Generator
 from unittest.mock import MagicMock, patch
 
 import httpx

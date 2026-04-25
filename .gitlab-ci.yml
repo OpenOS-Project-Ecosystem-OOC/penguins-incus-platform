@@ -76,6 +76,7 @@ shellcheck:
   stage: test
   image: python:3.12-slim
   before_script:
+    - apt-get update -qq && apt-get install -y -q build-essential pkg-config libcairo2-dev
     - pip install -e "penguins-incus-platform/${COMPONENT}[dev]" --quiet
   script:
     - cd penguins-incus-platform/${COMPONENT}
@@ -232,7 +233,7 @@ oci-build:
 
 distrobuilder-build:
   stage: build
-  image: golang:1.21
+  image: golang:1.25
   cache:
     key: distrobuilder-$CI_COMMIT_REF_SLUG
     paths: [distrobuilder/distrobuilder/vendor/]
@@ -243,7 +244,7 @@ distrobuilder-build:
 
 distrobuilder-test:
   stage: test
-  image: golang:1.21
+  image: golang:1.25
   cache:
     key: distrobuilder-$CI_COMMIT_REF_SLUG
     paths: [distrobuilder/distrobuilder/vendor/]
