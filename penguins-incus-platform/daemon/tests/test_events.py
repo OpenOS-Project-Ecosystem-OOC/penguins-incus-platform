@@ -1,7 +1,9 @@
 """Tests for EventBus fan-out."""
 
 import asyncio
+
 import pytest
+
 from penguins_incus.events import EventBus
 
 

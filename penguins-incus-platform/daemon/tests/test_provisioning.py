@@ -1,6 +1,5 @@
 """Tests for Compose provisioning logic."""
 
-import pytest
 from penguins_incus.provisioning.compose import convert_compose
 
 

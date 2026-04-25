@@ -1,7 +1,8 @@
 """Tests for IncusClient multi-remote management (no live Incus required)."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 import penguins_incus.incus.client as _mod
 from penguins_incus.incus.client import IncusClient
