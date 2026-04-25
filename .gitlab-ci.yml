@@ -76,9 +76,9 @@ shellcheck:
   stage: test
   image: python:3.12-slim
   before_script:
-    # build-essential: pycairo needs a C compiler
-    # libgirepository1.0-dev: dasbus (D-Bus) needs GObject introspection headers
-    - apt-get update -qq && apt-get install -y -q build-essential pkg-config libcairo2-dev libgirepository1.0-dev
+    # build-essential + libcairo2-dev: pycairo needs a C compiler and Cairo headers
+    # libgirepository1.0-dev + gir1.2-glib-2.0: dasbus needs GObject introspection
+    - apt-get update -qq && apt-get install -y -q build-essential pkg-config libcairo2-dev libgirepository1.0-dev gir1.2-glib-2.0
     - pip install -e "penguins-incus-platform/${COMPONENT}[dev]" --quiet
   script:
     - cd penguins-incus-platform/${COMPONENT}
@@ -252,9 +252,11 @@ distrobuilder-test:
     paths: [distrobuilder/distrobuilder/vendor/]
   script:
     - cd distrobuilder/distrobuilder
-    # image/ and sources/ tests require host tools (mksquashfs, xz, debootstrap)
-    # not available in the CI container — run only the portable packages
-    - go test $(go list ./... | grep -v '/image$' | grep -v '/sources$')
+    # Skip packages that require host tools or system headers not in the CI image:
+    #   image/      — needs mksquashfs, xz
+    #   sources/    — needs debootstrap, gpgme
+    #   distrobuilder/ — needs gpgme + btrfs/version.h (go.podman.io/storage)
+    - go test $(go list ./... | grep -v '/image$' | grep -v '/sources$' | grep -v '/distrobuilder$')
   <<: *changes-distrobuilder
 
 distrobuilder-menu-lint:
