@@ -1,131 +1,70 @@
-# Kapsule Incus Manager
+# penguins-incus-platform
 
-Unified [Incus](https://linuxcontainers.org/incus/) container and VM management
-with full feature parity across three frontends: a Qt6/QML desktop app, a React
-web UI, and a CLI.
-
-PIP is the central control plane for all Incus guest types — generic Linux
-containers, Waydroid (Android) containers, macOS KVM VMs, and Windows VMs.
-Four previously independent toolkits have been merged into the daemon as
-provisioning plugins:
-
-| Source project | Guest type | CLI entry point |
-|---|---|---|
-| [incusbox](https://gitlab.com/openos-project/incus_deving/incusbox) | Generic Linux containers | `penguins-incus provision generic` |
-| [waydroid-toolkit](https://gitlab.com/openos-project/incus_deving/waydroid-toolkit) | Waydroid (Android) containers | `penguins-incus provision waydroid` |
-| [Incus-MacOS-Toolkit](https://gitlab.com/openos-project/incus_deving/incus-mac-os-toolkit) | macOS KVM VMs | `penguins-incus provision macos` |
-| [incus-windows-toolkit](https://gitlab.com/openos-project/incus_deving/incus-windows-toolkit) | Windows VMs | `penguins-incus provision windows` |
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Frontends                           │
-│  Qt6/QML desktop app  │  React web UI  │  penguins-incus CLI       │
-└──────────┬────────────┴───────┬────────┴────────┬───────┘
-           │ D-Bus              │ HTTP/WS/SSE      │ HTTP
-           └──────────┬─────────┘                 │
-                      ▼                            │
-           ┌──────────────────────┐                │
-           │    penguins-incus-daemon        │◄───────────────┘
-           │  (FastAPI + dasbus)  │
-           │                      │
-           │  provisioning/       │
-           │    generic.py        │  ← incusbox
-           │    waydroid.py       │  ← waydroid-toolkit
-           │    macos.py          │  ← Incus-MacOS-Toolkit
-           │    windows.py        │  ← incus-windows-toolkit
-           └──────────┬───────────┘
-                      │ Unix socket
-                      ▼
-           ┌──────────────────────┐
-           │       Incus          │
-           │  (containers + VMs)  │
-           └──────────────────────┘
-```
-
-The daemon is the single control plane. No frontend or plugin calls the `incus`
-CLI directly — all operations go through the Incus REST API. Every action
-available in the GUI is also available in the CLI and REST API.
+Unified [Incus](https://linuxcontainers.org/incus/) platform covering container
+and VM management, image building, image serving, and penguins-eggs integration.
 
 ## Repository layout
 
 ```
-├── ARCHITECTURE.md                    # Design decisions and component boundaries
-├── penguins-incus-platform/
-│   ├── api/schema/                    # OpenAPI schema (143 operations) + D-Bus XML
-│   ├── daemon/
-│   │   └── penguins_incus/
-│   │       ├── provisioning/          # Guest-type provisioning plugins
-│   │       │   ├── generic.py         # incusbox feature set
-│   │       │   ├── waydroid.py        # waydroid-toolkit feature set
-│   │       │   ├── macos.py           # Incus-MacOS-Toolkit feature set
-│   │       │   └── windows.py         # incus-windows-toolkit feature set
-│   │       └── incus/client.py        # Async Incus REST client
-│   ├── cli/                           # Python CLI (Click + httpx + rich)
-│   ├── profiles/                      # Bundled Incus profile presets (16 profiles)
-│   │   ├── generic/                   # incusbox profiles
-│   │   ├── macos/                     # macOS KVM profile
-│   │   ├── windows/                   # Windows VM profiles + GPU overlays
-│   │   └── waydroid/                  # Waydroid container profile
-│   ├── ui-web/                        # React/TypeScript web UI (Vite)
-│   └── ui-qml/                        # Qt6/QML desktop UI + libpenguins-incus-qt
+penguins-incus-platform/   Core platform: daemon, CLI, web UI, QML desktop UI
+oci-builder/               OCI image builder using Incus containers as build sandbox (Rust)
+distrobuilder/             LXC/Incus rootfs image builder + TUI menu (Go + Python)
+unified-image-server/      Simplestreams image server + multi-distro build manifests (Elixir)
+integration/               penguins-eggs and recovery hook scripts for all components
 ```
 
-Full documentation is in [`penguins-incus-platform/README.md`](penguins-incus-platform/README.md).
+---
 
-## Quick start
+## penguins-incus-platform
 
-### Daemon
+Incus container and VM management with full feature parity across three
+frontends: a Qt6/QML desktop app, a React web UI, and a CLI. A single daemon
+is the control plane for all guest types.
+
+| Guest type | CLI entry point |
+|---|---|
+| Generic Linux containers | `penguins-incus provision generic` |
+| Waydroid (Android) containers | `penguins-incus provision waydroid` |
+| macOS KVM VMs | `penguins-incus provision macos` |
+| Windows VMs | `penguins-incus provision windows` |
+
+```
+penguins-incus-platform/
+├── api/schema/        OpenAPI schema + D-Bus XML
+├── daemon/            FastAPI + dasbus daemon
+├── cli/               Click CLI (thin HTTP client)
+├── profiles/          Bundled Incus profile presets
+├── ui-web/            React/TypeScript web UI (Vite)
+├── ui-qml/            Qt6/QML desktop UI + libpenguins-incus-qt
+├── bin/               penguins-incus-hub management helper
+├── lib/               Shared shell helpers
+└── INTEGRATIONS.md    penguins-eggs integration details
+```
+
+See [`penguins-incus-platform/README.md`](penguins-incus-platform/README.md)
+and [`ARCHITECTURE.md`](ARCHITECTURE.md) for full documentation.
+
+### Quick start
 
 ```bash
-cd penguins-incus-platform/daemon
-pip install -e ".[dev]"
+# Daemon
+cd penguins-incus-platform/daemon && pip install -e ".[dev]"
 penguins-incus-daemon
-```
 
-### CLI
-
-```bash
-cd penguins-incus-platform/cli
-pip install -e ".[dev]"
-
-# Generic containers (incusbox)
-penguins-incus provision generic create mybox --image images:ubuntu/24.04/cloud
-
-# Waydroid (Android) container
-penguins-incus provision waydroid create my-android --image-type GAPPS
-
-# macOS VM
-penguins-incus provision macos image firmware
-penguins-incus provision macos image fetch --version sonoma
-penguins-incus provision macos create my-mac --version sonoma
-
-# Windows VM
-penguins-incus provision windows create my-win --image /path/to/win11.iso
-
-# Standard instance management
+# CLI
+cd penguins-incus-platform/cli && pip install -e ".[dev]"
 penguins-incus container list
-penguins-incus vm list
+
+# Web UI
+cd penguins-incus-platform/ui-web && npm install && npm run dev
+
+# QML app
+cmake -B penguins-incus-platform/ui-qml/build \
+      -S penguins-incus-platform/ui-qml -G Ninja
+cmake --build penguins-incus-platform/ui-qml/build
 ```
 
-### Web UI
-
-```bash
-cd penguins-incus-platform/ui-web
-npm install && npm run dev
-# Open http://localhost:5173
-```
-
-### QML desktop app
-
-```bash
-cmake -B build -S penguins-incus-platform/ui-qml -G Ninja
-cmake --build build
-./build/penguins-incus-app
-```
-
-## Prerequisites
+### Prerequisites
 
 | Component | Requirement |
 |---|---|
@@ -135,7 +74,115 @@ cmake --build build
 | Qt6 | ≥ 6.5 with DBus, Network, WebSockets, Quick, QuickControls2 |
 | CMake | ≥ 3.22 (QML app) |
 
-## License
+---
 
-- Daemon, CLI, web UI: GPL-3.0-or-later
-- `libpenguins-incus-qt`: LGPL-2.1-or-later
+## oci-builder
+
+Builds OCI-compliant container images using Incus ephemeral system containers
+as the build environment. Gives builds access to a real init system and full
+cgroup isolation — useful for images that require `systemd` or complex package
+manager interactions during build.
+
+Upstream: [incus-oci-builder](https://gitlab.com/openos-project/incus_deving/incus-oci-builder)
+
+```
+oci-builder/
+├── src/       Rust source (CLI, Incus client, OCI layer packer, registry push)
+├── tests/     Unit and integration tests
+├── docs/
+├── Cargo.toml
+└── DESIGN.md  Architecture and design decisions
+```
+
+```bash
+cargo build --manifest-path oci-builder/Cargo.toml
+cargo test  --manifest-path oci-builder/Cargo.toml
+
+# Build an OCI image from a definition file
+incus-oci-builder build my-image.yaml
+```
+
+See [`oci-builder/DESIGN.md`](oci-builder/DESIGN.md) for the build pipeline,
+definition file format, and module layout.
+
+---
+
+## distrobuilder
+
+[`lxc/distrobuilder`](https://github.com/lxc/distrobuilder) (Go) and
+[`distrobuilder-menu`](https://github.com/itoffshore/distrobuilder-menu)
+(Python TUI) in a single tree, with YAML templates for common distributions.
+
+Upstream: [penguins-distrobuilder](https://gitlab.com/openos-project/penguins-eggs_deving/penguins-distrobuilder)
+
+```
+distrobuilder/
+├── distrobuilder/   Go source — builds LXC/Incus rootfs images from YAML templates
+├── menu/            Python TUI frontend (dbmenu)
+├── templates/       Distrobuilder YAML templates
+└── scripts/         Install helpers
+```
+
+```bash
+# Build distrobuilder binary
+make -C distrobuilder build
+
+# Install binary + dbmenu
+make -C distrobuilder install
+
+# Launch the TUI
+dbmenu           # Incus/LXD mode
+dbmenu --lxc     # LXC mode
+```
+
+---
+
+## unified-image-server
+
+Simplestreams image server for LXC/LXD/Incus with a multi-distro build
+pipeline and live-ISO remastering support.
+
+```
+unified-image-server/
+├── server/             Elixir/Phoenix simplestreams server
+├── manifests/          Distrobuilder YAMLs for Debian, Ubuntu, Fedora, Arch, Gentoo, …
+├── chromiumos-stage3/  ChromiumOS stage3 builder (amd64 + arm64)
+└── penguins-eggs/      ChromiumOS family support for penguins-eggs
+```
+
+See [`unified-image-server/README.md`](unified-image-server/README.md).
+
+---
+
+## integration
+
+Hook scripts that connect all components to
+[penguins-eggs](https://gitlab.com/openos-project/penguins-eggs_deving/penguins-eggs)
+and [penguins-recovery](https://gitlab.com/openos-project/penguins-eggs_deving/penguins-recovery).
+
+```
+integration/
+├── eggs-plugin/
+│   ├── pip-hook.sh               Embeds PIP daemon + CLI into produced ISOs
+│   └── distrobuilder-hook.sh     Builds a distrobuilder image alongside the ISO
+├── recovery-plugin/
+│   ├── pip-recovery-plugin.sh    Snapshots Incus instances before reset
+│   └── distrobuilder-recovery-hook.sh  Snapshots rootfs via distrobuilder before reset
+└── conf/
+    └── pip-eggs-hooks.conf.default
+```
+
+See [`integration/README.md`](integration/README.md).
+
+---
+
+## Licenses
+
+| Component | License |
+|---|---|
+| penguins-incus-platform daemon, CLI, web UI | GPL-3.0-or-later |
+| libpenguins-incus-qt | LGPL-2.1-or-later |
+| oci-builder | Apache-2.0 |
+| distrobuilder (Go) | Apache-2.0 |
+| distrobuilder-menu (Python) | GPL-3.0 |
+| profiles | MIT |
