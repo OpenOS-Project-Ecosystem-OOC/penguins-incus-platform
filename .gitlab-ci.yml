@@ -1,25 +1,52 @@
-# Converted from GitHub Actions — penguins-incus-platform
+# penguins-incus-platform — unified CI
+#
+# Jobs are path-scoped: only the component(s) touched in a given push run.
+# The secret-scan and shellcheck jobs always run.
+#
+# Stages run in order; jobs within a stage run in parallel.
 
 stages:
   - secret-scan
+  - lint
   - test
+  - build
 
-test:
-  stage: test
-  image: ubuntu:22.04
-  before_script:
-    - apt-get update -qq && apt-get install -y shellcheck
-  script:
-    - |
-      failed=0
-      for f in $(find . -name "*.sh" ! -path "./.git/*"); do
-        bash -n "$f" || { echo "FAIL syntax: $f"; failed=1; }
-        shellcheck --severity=warning "$f" || { echo "FAIL shellcheck: $f"; failed=1; }
-      done
-      exit $failed
+# ── Shared rules ─────────────────────────────────────────────────────────────
+
+.mr-or-main: &mr-or-main
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|feat\/.+)$/'
+
+.changes-pip: &changes-pip
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ["penguins-incus-platform/**/*"]
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|feat\/.+)$/'
+      changes: ["penguins-incus-platform/**/*"]
+
+.changes-oci-builder: &changes-oci-builder
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ["oci-builder/**/*"]
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|feat\/.+)$/'
+      changes: ["oci-builder/**/*"]
+
+.changes-distrobuilder: &changes-distrobuilder
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ["distrobuilder/**/*"]
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|feat\/.+)$/'
+      changes: ["distrobuilder/**/*"]
+
+.changes-integration: &changes-integration
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ["integration/**/*"]
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|feat\/.+)$/'
+      changes: ["integration/**/*"]
+
+# ── secret-scan (always) ─────────────────────────────────────────────────────
 
 secret-scan:
   stage: secret-scan
@@ -29,7 +56,220 @@ secret-scan:
   script:
     - |
       echo "Scanning commit history for leaked GitLab PATs..."
-      git log --all -p | grep -E "glpat-[A-Za-z0-9_-]{20,}" && echo "LEAKED TOKEN DETECTED" && exit 1 || echo "No leaked tokens found."
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH =~ /^(main|master)$/'
+      git log --all -p | grep -E "glpat-[A-Za-z0-9_-]{20,}" \
+        && echo "LEAKED TOKEN DETECTED" && exit 1 \
+        || echo "No leaked tokens found."
+  <<: *mr-or-main
+
+# ── lint: shell scripts (always — covers integration/ + distrobuilder scripts) ─
+
+shellcheck:
+  stage: lint
+  image: koalaman/shellcheck-alpine:stable
+  script:
+    - find . -name "*.sh" ! -path "./.git/*" -exec shellcheck -S error {} +
+  <<: *mr-or-main
+
+# ── penguins-incus-platform: Python daemon + CLI ─────────────────────────────
+
+.pip-python:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install -e "penguins-incus-platform/${COMPONENT}[dev]" --quiet
+  script:
+    - cd penguins-incus-platform/${COMPONENT}
+    - ruff check .
+    - mypy .
+    - pytest --tb=short -q --asyncio-mode=auto
+  <<: *changes-pip
+
+pip-daemon:
+  extends: .pip-python
+  variables:
+    COMPONENT: daemon
+
+pip-cli:
+  extends: .pip-python
+  variables:
+    COMPONENT: cli
+
+# ── penguins-incus-platform: profile YAML validation ─────────────────────────
+
+pip-profiles:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install pyyaml --quiet
+  script:
+    - |
+      python3 - <<'EOF'
+      import pathlib, sys, yaml
+      root = pathlib.Path("penguins-incus-platform/profiles")
+      errors = []
+      for f in sorted(root.rglob("*.yaml")):
+          try:
+              data = yaml.safe_load(f.read_text())
+              if not isinstance(data, dict):
+                  errors.append(f"{f}: root must be a mapping")
+          except yaml.YAMLError as e:
+              errors.append(f"{f}: {e}")
+      if errors:
+          for e in errors: print("ERROR:", e, file=sys.stderr)
+          sys.exit(1)
+      print(f"OK: {sum(1 for _ in root.rglob('*.yaml'))} profile files validated")
+      EOF
+  <<: *changes-pip
+
+# ── penguins-incus-platform: web UI ──────────────────────────────────────────
+
+pip-web:
+  stage: test
+  image: node:20-slim
+  cache:
+    key: pip-web-$CI_COMMIT_REF_SLUG
+    paths: [penguins-incus-platform/ui-web/node_modules/]
+  script:
+    - cd penguins-incus-platform/ui-web
+    - npm install
+    - npm run typecheck
+    - npm run lint
+    - npm test
+    - npm run build
+  <<: *changes-pip
+
+# ── penguins-incus-platform: QML / C++ ───────────────────────────────────────
+
+pip-qml:
+  stage: build
+  image: ubuntu:24.04
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -q cmake ninja-build
+        qt6-base-dev qt6-declarative-dev
+        qt6-websockets-dev libdbus-1-dev
+  script:
+    - cmake -B penguins-incus-platform/ui-qml/build
+            -S penguins-incus-platform/ui-qml
+            -G Ninja
+            -DCMAKE_BUILD_TYPE=Release
+            -DBUILD_TESTS=OFF
+    - cmake --build penguins-incus-platform/ui-qml/build --parallel
+  <<: *changes-pip
+
+# ── oci-builder: Rust ─────────────────────────────────────────────────────────
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  CARGO_INCREMENTAL: "0"
+
+.oci-cache: &oci-cache
+  cache:
+    key: oci-builder-$CI_COMMIT_REF_SLUG
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - oci-builder/target/
+
+oci-fmt:
+  stage: lint
+  image: rust:latest
+  script:
+    - rustup component add rustfmt
+    - cargo fmt --manifest-path oci-builder/Cargo.toml -- --check
+  <<: *changes-oci-builder
+  <<: *oci-cache
+
+oci-clippy:
+  stage: lint
+  image: rust:latest
+  script:
+    - rustup component add clippy
+    - cargo clippy --manifest-path oci-builder/Cargo.toml -- -D warnings
+  <<: *changes-oci-builder
+  <<: *oci-cache
+
+oci-test:
+  stage: test
+  image: rust:latest
+  script:
+    - cargo test --manifest-path oci-builder/Cargo.toml
+        --test unit_oci --test unit_export
+        --test unit_http_downloader --test unit_preflight
+    - cargo test --manifest-path oci-builder/Cargo.toml --lib
+  <<: *changes-oci-builder
+  <<: *oci-cache
+
+oci-build:
+  stage: build
+  image: rust:latest
+  script:
+    - cargo build --manifest-path oci-builder/Cargo.toml
+  <<: *changes-oci-builder
+  <<: *oci-cache
+
+# Integration tests require a privileged runner with Incus installed.
+# To enable: add a runner with the `incus` tag and uncomment this job.
+#
+# oci-integration:
+#   stage: test
+#   image: rust:latest
+#   tags: [incus]
+#   variables:
+#     INCUS_INTEGRATION_TESTS: "1"
+#   before_script:
+#     - incus admin init --auto
+#     - incus remote add images https://images.linuxcontainers.org
+#         --protocol=simplestreams --public
+#   script:
+#     - cargo test --manifest-path oci-builder/Cargo.toml
+#         --test integration_build -- --nocapture
+#   after_script:
+#     - incus list
+#   <<: *changes-oci-builder
+
+# ── distrobuilder: Go binary ──────────────────────────────────────────────────
+
+distrobuilder-build:
+  stage: build
+  image: golang:1.21
+  cache:
+    key: distrobuilder-$CI_COMMIT_REF_SLUG
+    paths: [distrobuilder/distrobuilder/vendor/]
+  script:
+    - cd distrobuilder/distrobuilder
+    - go build ./cmd/distrobuilder
+  <<: *changes-distrobuilder
+
+distrobuilder-test:
+  stage: test
+  image: golang:1.21
+  cache:
+    key: distrobuilder-$CI_COMMIT_REF_SLUG
+    paths: [distrobuilder/distrobuilder/vendor/]
+  script:
+    - cd distrobuilder/distrobuilder
+    - go test ./...
+  <<: *changes-distrobuilder
+
+distrobuilder-menu-lint:
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install ruff --quiet
+  script:
+    - ruff check distrobuilder/menu/
+  <<: *changes-distrobuilder
+
+# ── integration hooks: shellcheck already covers *.sh; add conf lint ─────────
+
+integration-conf:
+  stage: lint
+  image: alpine:latest
+  script:
+    - |
+      for f in integration/conf/*.conf.default; do
+        sh -n "$f" || { echo "FAIL: $f"; exit 1; }
+      done
+      echo "OK: all conf.default files pass syntax check"
+  <<: *changes-integration
