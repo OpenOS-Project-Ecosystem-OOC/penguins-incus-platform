@@ -241,7 +241,7 @@ distrobuilder-build:
     paths: [distrobuilder/distrobuilder/vendor/]
   script:
     - cd distrobuilder/distrobuilder
-    - go build ./distrobuilder
+    - go build -o /tmp/distrobuilder-bin ./distrobuilder
   <<: *changes-distrobuilder
 
 distrobuilder-test:
