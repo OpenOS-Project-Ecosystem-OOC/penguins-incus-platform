@@ -2,10 +2,10 @@
 
 from penguins_incus.resources import (
     _CpuSample,
-    calc_cpu_fraction,
-    _read_cpu_ns,
-    _parse_memory,
     _parse_disk,
+    _parse_memory,
+    _read_cpu_ns,
+    calc_cpu_fraction,
 )
 
 
@@ -44,7 +44,9 @@ def test_cpu_fraction_scales_by_num_cpus() -> None:
 def test_cpu_fraction_clamped_to_one() -> None:
     # CPU delta > wall delta (e.g. multi-core burst) -> clamp to 1.0
     prev = _CpuSample(cpu_ns=0, wall_ns=0.0)
-    result = calc_cpu_fraction(prev, curr_cpu_ns=10_000_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=1)
+    result = calc_cpu_fraction(
+        prev, curr_cpu_ns=10_000_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=1
+    )
     assert result == 1.0
 
 
@@ -53,13 +55,18 @@ def test_cpu_fraction_non_zero_baseline() -> None:
     prev = _CpuSample(cpu_ns=1_000_000_000, wall_ns=10_000_000_000.0)
     curr_cpu_ns  = 1_000_000_000 + 2_500_000_000   # +2.5 s CPU
     curr_wall_ns = 10_000_000_000.0 + 5_000_000_000.0  # +5 s wall
-    result = calc_cpu_fraction(prev, curr_cpu_ns=curr_cpu_ns, curr_wall_ns=curr_wall_ns, num_cpus=1)
+    result = calc_cpu_fraction(
+        prev, curr_cpu_ns=curr_cpu_ns, curr_wall_ns=curr_wall_ns, num_cpus=1
+    )
     assert abs(result - 0.5) < 1e-9
 
 
 def test_cpu_fraction_zero_num_cpus_guard() -> None:
     prev = _CpuSample(cpu_ns=0, wall_ns=0.0)
-    assert calc_cpu_fraction(prev, curr_cpu_ns=1_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=0) == 0.0
+    assert (
+        calc_cpu_fraction(prev, curr_cpu_ns=1_000_000, curr_wall_ns=1_000_000_000.0, num_cpus=0)
+        == 0.0
+    )
 
 
 # ── _read_cpu_ns ──────────────────────────────────────────────────────────────

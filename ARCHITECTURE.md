@@ -1,6 +1,31 @@
-# Penguins-Incus-Platform — Architecture
+# penguins-incus-platform — Architecture
 
-## Overview
+## Repository overview
+
+This repository contains five components. Each is independently buildable and
+has its own CI jobs, but they share a common runtime dependency (Incus) and a
+common integration layer (`integration/`).
+
+| Directory | Language | Role |
+|---|---|---|
+| `penguins-incus-platform/` | Python, TypeScript, C++/QML | Daemon, CLI, web UI, QML desktop UI |
+| `oci-builder/` | Rust | OCI image builder using Incus containers as build sandbox |
+| `distrobuilder/` | Go, Python | LXC/Incus rootfs image builder + TUI menu |
+| `unified-image-server/` | Elixir | Simplestreams image server + multi-distro build manifests |
+| `integration/` | Shell | penguins-eggs and recovery hook scripts |
+
+The three image-related components are complementary, not a hierarchy:
+
+- **oci-builder** produces OCI images (for container registries, Docker-compatible runtimes).
+- **distrobuilder** produces LXC/Incus rootfs images (for the Incus image store / simplestreams).
+- **unified-image-server** serves those rootfs images over the simplestreams protocol.
+
+`penguins-incus-platform` is the runtime management layer — it does not build
+images, it manages the Incus instances that run them.
+
+---
+
+## penguins-incus-platform — Overview
 
 Penguins-Incus-Platform is a unified Incus container and VM management platform
 consisting of three first-class frontends (QML desktop UI, web UI, CLI) backed
@@ -329,7 +354,7 @@ require host-side downloads use a temporary helper container.
 
 ---
 
-## Non-Goals
+## Non-Goals (penguins-incus-platform)
 
 - Windows or macOS *host* support (Incus is Linux-only; Windows/macOS *guests*
   are fully supported via the provisioning plugins)
@@ -341,3 +366,151 @@ require host-side downloads use a temporary helper container.
 - Maintaining the four source toolkits (incusbox, waydroid-toolkit,
   Incus-MacOS-Toolkit, incus-windows-toolkit) as independent projects — PIP is
   now the canonical location for all of their functionality
+
+---
+
+## oci-builder
+
+A stateless Rust binary that builds OCI-compliant container images using Incus
+ephemeral system containers as the build environment.
+
+**Why Incus instead of chroot/overlay**: builds get a real init system, full
+cgroup isolation, and proper kernel namespace separation. This matters for
+images that require `systemd`, complex package manager interactions, or kernel
+module setup during build — scenarios where Dockerfile builders fall short.
+
+**Key design decisions**:
+
+- All communication with Incus goes through its Unix socket
+  (`/var/lib/incus/unix.socket`) via the REST API. No `incus` CLI binary is
+  required at runtime.
+- Build containers are created with `ephemeral: true` — Incus deletes them
+  automatically on stop, even if the builder crashes before the explicit
+  cleanup step.
+- No persistent daemon. Each `incus-oci-builder build` invocation is
+  independent.
+- Registry push delegates to `skopeo copy` when available; a native OCI
+  Distribution API client covers environments without skopeo.
+
+**Build pipeline** (in order):
+
+1. Create ephemeral Incus container from the source image
+2. Run `post-unpack` actions
+3. Install/remove packages via the configured manager
+4. Run `post-packages` actions
+5. Write files into the container (`dump`, `copy`, `remove`, `hostname`, `hosts`)
+6. Run `post-files` actions
+7. Export rootfs via the Incus backup export API
+8. Pack rootfs into a gzip-compressed tar layer; compute SHA-256 digests; write OCI Image Layout
+9. Push to registry (optional)
+10. Delete the ephemeral container
+
+**Module layout**:
+
+```
+oci-builder/src/
+  main.rs          CLI entry point
+  cli/             clap argument definitions
+  definition/      Definition YAML types + validation
+  incus/
+    api.rs         Incus REST API request/response types
+    client.rs      HTTP client over Unix socket
+    exec.rs        Package manager and script helpers
+    export.rs      Rootfs extraction
+  oci/
+    layer.rs       Rootfs → gzip tar layer blob
+    commit.rs      OCI image layout assembly
+    push.rs        Registry push (skopeo + native fallback)
+  builder/         Pipeline orchestrator
+```
+
+**Definition file format** — YAML, subset of distrobuilder's schema extended
+with an `oci` section:
+
+```yaml
+image:    # distribution, release, architecture, name, tag
+source:   # downloader (incus | debootstrap | rpmbootstrap | rootfs-http), image/url
+packages: # manager, update, cleanup, sets[], repositories[]
+actions:  # trigger (post-unpack | post-packages | post-files), shell script
+files:    # generator (dump | copy | remove | hostname | hosts), path, content
+oci:      # registry, cmd, entrypoint, labels, exposed_ports, layered
+```
+
+See [`oci-builder/DESIGN.md`](oci-builder/DESIGN.md) for full detail.
+
+**Upstream**: [incus-oci-builder](https://gitlab.com/openos-project/incus_deving/incus-oci-builder)
+
+---
+
+## distrobuilder
+
+Two upstream projects in a single tree:
+
+| Subtree | Upstream | Language | Purpose |
+|---|---|---|---|
+| `distrobuilder/distrobuilder/` | [lxc/distrobuilder](https://github.com/lxc/distrobuilder) | Go | Builds LXC/Incus rootfs images from YAML template definitions |
+| `distrobuilder/menu/` | [itoffshore/distrobuilder-menu](https://github.com/itoffshore/distrobuilder-menu) | Python | Console TUI frontend for distrobuilder |
+
+**distrobuilder (Go)** — builds rootfs images via `build-dir`, `build-incus`,
+`build-lxc`, `pack-incus`, `pack-lxc`. Template definitions are YAML files
+under `distrobuilder/templates/`. The output is a rootfs tarball suitable for
+import into the Incus image store or served via `unified-image-server`.
+
+**distrobuilder-menu (Python)** — menu-driven TUI (`dbmenu`) for template
+selection, cloud-init configuration, custom template generation, and automatic
+template updates via the GitHub REST API. Config at `~/.config/dbmenu.yaml`.
+
+**Relationship to unified-image-server**: `unified-image-server/manifests/`
+contains the distrobuilder YAML manifests used by the server's CI build
+pipeline. `distrobuilder/templates/` contains templates for local/manual use.
+They share the same YAML schema but serve different workflows.
+
+**Upstream**: [penguins-distrobuilder](https://gitlab.com/openos-project/penguins-eggs_deving/penguins-distrobuilder)
+
+---
+
+## integration
+
+Shell hook scripts that connect components to `penguins-eggs` (ISO producer)
+and `penguins-recovery` (factory reset tool). Two hook points exist in each:
+
+| Hook point | Trigger | Scripts |
+|---|---|---|
+| `eggs-plugin` (post-produce) | `eggs produce` completes | `pip-hook.sh`, `distrobuilder-hook.sh` |
+| `recovery-plugin` (pre/post-reset) | `penguins-powerwash` | `pip-recovery-plugin.sh`, `distrobuilder-recovery-hook.sh` |
+
+The two scripts per hook point are independent — they have separate
+configuration files and perform unrelated actions. They are co-located because
+they share the same registration mechanism with `penguins-eggs`.
+
+**pip-hook.sh**: embeds the PIP daemon binary, CLI, profiles, and a systemd
+unit into the produced ISO so that `penguins-incus-daemon` auto-starts in the
+live environment.
+
+**distrobuilder-hook.sh**: after ISO creation, optionally builds a
+distrobuilder LXC/Incus image of the produced system for container
+distribution alongside the standard ISO.
+
+**pip-recovery-plugin.sh**: snapshots all running Incus instances before any
+powerwash reset; restarts the PIP daemon and re-applies default profiles after
+a hard reset.
+
+**distrobuilder-recovery-hook.sh**: snapshots the current rootfs via
+`distrobuilder pack-incus` (or `pack-lxc`) before a factory reset so the
+container state can be restored afterwards.
+
+Configuration files live in `integration/conf/` and are installed to
+`/etc/penguins-*/` by each component's installer.
+
+---
+
+## Licenses
+
+| Component | License |
+|---|---|
+| penguins-incus-platform daemon, CLI, web UI | GPL-3.0-or-later |
+| libpenguins-incus-qt | LGPL-2.1-or-later |
+| penguins-incus-platform profiles | MIT |
+| oci-builder | Apache-2.0 |
+| distrobuilder (Go) | Apache-2.0 |
+| distrobuilder-menu (Python) | GPL-3.0 |

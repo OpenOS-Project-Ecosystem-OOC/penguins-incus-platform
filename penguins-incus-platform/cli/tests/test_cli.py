@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from typing import Any, Generator, Iterator
+from typing import Any, Generator
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -36,7 +36,7 @@ def _runner() -> CliRunner:
     return CliRunner()
 
 
-def _invoke(args: list[str], mock_data: Any = None, status_code: int = 200):
+def _invoke(args: list[str], mock_data: Any = None, status_code: int = 200) -> Any:
     """Invoke CLI with a mocked DaemonClient that returns *mock_data*."""
     runner = _runner()
     mock_resp = _mock_response(mock_data or [], status_code)

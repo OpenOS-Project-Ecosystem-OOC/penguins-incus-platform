@@ -1,7 +1,9 @@
 """Tests for EventBus fan-out."""
 
 import asyncio
+
 import pytest
+
 from penguins_incus.events import EventBus
 
 
@@ -49,7 +51,7 @@ async def test_full_queue_drops_event_without_raising() -> None:
 @pytest.mark.asyncio
 async def test_iter_events_type_filter() -> None:
     bus = EventBus()
-    results: list = []
+    results: list[dict[str, object]] = []
 
     async def _collect() -> None:
         async for event in bus.iter_events(type_filter="lifecycle"):
@@ -73,7 +75,7 @@ async def test_iter_events_type_filter() -> None:
 @pytest.mark.asyncio
 async def test_iter_events_project_filter() -> None:
     bus = EventBus()
-    results: list = []
+    results: list[dict[str, object]] = []
 
     async def _collect() -> None:
         async for event in bus.iter_events(project_filter="prod"):

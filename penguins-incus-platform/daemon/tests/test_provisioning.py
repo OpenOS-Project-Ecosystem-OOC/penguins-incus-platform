@@ -1,6 +1,7 @@
 """Tests for Compose provisioning logic."""
 
-import pytest
+from __future__ import annotations
+
 from penguins_incus.provisioning.compose import convert_compose
 
 

@@ -1,1 +1,11 @@
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
 .npmrc
+
+# Secrets
+.env
+.env.*

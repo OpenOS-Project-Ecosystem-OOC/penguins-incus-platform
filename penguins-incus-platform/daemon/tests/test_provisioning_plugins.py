@@ -5,8 +5,9 @@ All tests use a mock IncusClient so no live Incus daemon is required.
 
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
