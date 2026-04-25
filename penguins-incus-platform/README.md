@@ -1,8 +1,7 @@
-# Kapsule Incus Manager
+# penguins-incus-platform — core platform
 
-Unified [Incus](https://linuxcontainers.org/incus/) container and VM management
-with full feature parity across three frontends: a Qt6/QML desktop app, a React
-web UI, and a CLI.
+Incus container and VM management with full feature parity across three
+frontends: a Qt6/QML desktop app, a React web UI, and a CLI.
 
 PIP is also the central control plane for four guest-type toolkits that were
 previously maintained as separate projects:
