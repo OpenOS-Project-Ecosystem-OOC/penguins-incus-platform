@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Setup a red prompt for root and a green one for users.
 # rename this file to color_prompt.sh to actually enable it
 NORMAL="\[\e[0m\]"

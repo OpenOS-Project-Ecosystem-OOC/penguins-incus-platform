@@ -33,10 +33,8 @@ case "${RECOVERY_HOOK:-pre-reset}" in
           systemctl restart penguins-incus-daemon 2>/dev/null || true
 
           # Re-apply default profiles if the CLI is available
-          local cli
           cli="$(_pip_cli_bin)"
           if [[ -x "${cli}" ]]; then
-            local profiles_dir
             profiles_dir="$(_pip_profiles_dir)"
             if [[ -n "${profiles_dir}" ]]; then
               echo "[penguins-incus-hub] Re-applying default Incus profiles..."
