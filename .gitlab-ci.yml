@@ -241,11 +241,13 @@ distrobuilder-build:
     paths: [distrobuilder/distrobuilder/vendor/]
   before_script:
     # gpgme: required by github.com/proglottis/gpgme (container image signing)
-    # libbtrfs-dev: required by go.podman.io/storage btrfs driver
-    - apt-get update -qq && apt-get install -y -q libgpgme-dev libbtrfs-dev
+    - apt-get update -qq && apt-get install -y -q libgpgme-dev
   script:
     - cd distrobuilder/distrobuilder
-    - go build -o /tmp/distrobuilder-bin ./distrobuilder
+    # exclude_graphdriver_btrfs: go.podman.io/storage btrfs driver has a
+    # build-breaking dependency on securejoin.OpenInRoot (not yet released);
+    # btrfs support is not needed for the CI build check
+    - go build -tags exclude_graphdriver_btrfs -o /tmp/distrobuilder-bin ./distrobuilder
   <<: *changes-distrobuilder
 
 distrobuilder-test:
