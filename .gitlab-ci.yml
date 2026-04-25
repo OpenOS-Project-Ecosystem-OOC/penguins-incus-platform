@@ -148,7 +148,7 @@ pip-qml:
   image: ubuntu:24.04
   before_script:
     - apt-get update -qq
-    - apt-get install -y -q cmake ninja-build
+    - apt-get install -y -q cmake ninja-build g++
         qt6-base-dev qt6-declarative-dev
         qt6-websockets-dev libdbus-1-dev
   script:
@@ -241,7 +241,7 @@ distrobuilder-build:
     paths: [distrobuilder/distrobuilder/vendor/]
   script:
     - cd distrobuilder/distrobuilder
-    - go build ./cmd/distrobuilder
+    - go build ./distrobuilder
   <<: *changes-distrobuilder
 
 distrobuilder-test:
