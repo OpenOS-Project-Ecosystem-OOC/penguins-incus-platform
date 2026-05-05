@@ -1,6 +1,6 @@
 # penguins-eggs / ChromiumOS support
 
-ChromiumOS family integration for [penguins-eggs](https://github.com/pieroproietti/penguins-eggs),
+ChromiumOS family integration for [penguins-eggs](https://github.com/Interested-Deving-1896/penguins-eggs),
 the live-ISO remastering tool.
 
 These files are drop-in replacements/additions for the `all-features` branch of
