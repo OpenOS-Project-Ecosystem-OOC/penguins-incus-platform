@@ -1,7 +1,7 @@
 name: Mirror to OpenOS-Project-Ecosystem-OOC
 
 # Sync chain:
-#   Interested-Deving-1896  ->(upstream mirror.yaml)->  OpenOS-Project-OSP
+#   OpenOS-Project-Ecosystem-OOC  ->(upstream mirror.yaml)->  OpenOS-Project-OSP
 #   OpenOS-Project-OSP  ->(this file)->  OpenOS-Project-Ecosystem-OOC
 
 on:
